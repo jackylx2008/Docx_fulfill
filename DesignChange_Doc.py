@@ -415,5 +415,5 @@ if __name__ == "__main__":
     B23_basic_doc_file = get_file_for_DesignChanges("B23", "docx")
     CNCC2_DesignChanges(B25B26_xlsx_with_dir,
                         B25B26_basic_doc_file, "B25B26", "./B25B26/")
-    CNCC2_DesignChanges(B23_xlsx_with_dir, B23_basic_doc_file, "B23", "./B23/")
+    # CNCC2_DesignChanges(B23_xlsx_with_dir, B23_basic_doc_file, "B23", "./B23/")
 
