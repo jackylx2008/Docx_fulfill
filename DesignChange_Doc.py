@@ -266,6 +266,7 @@ def rename_folder_base_on_2nd_folder_name(src_dir: str, key_word: str) -> True o
 
 
 def main():
+    # ! main函数中的下面这些代码需要重新整理，目前只能针对PC进行工作，不合理
     # ! 废弃的代码
     # * 处理步骤一：处理xlsx文件，查重生成df
     # 输入数据路径 & 临时文件路径
@@ -416,4 +417,3 @@ if __name__ == "__main__":
     CNCC2_DesignChanges(B25B26_xlsx_with_dir,
                         B25B26_basic_doc_file, "B25B26", "./B25B26/")
     # CNCC2_DesignChanges(B23_xlsx_with_dir, B23_basic_doc_file, "B23", "./B23/")
-
