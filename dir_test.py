@@ -3,7 +3,8 @@ import os
 
 def get_files_with_key_words(dir: str, ext: str, key_word: str):
     files_no_ext = []
-    for root, dirs, files in os.walk(dir):
+    for _, _, files in os.walk(dir):
+
         for file in files:
             print(file)
             if file.find(key_word) >= 0 and (file.find(ext.upper()) >= 0 or file.find(ext.lower()) >= 0):

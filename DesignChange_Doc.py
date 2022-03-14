@@ -1,4 +1,5 @@
-from numpy.core.numerictypes import _can_coerce_all
+# WARN: 本程序只能在windows平台下,上一级菜单中运行
+# TODO: 解决在Mac下运行问题,应该是文件夹路径问题导致的
 import pandas as pd
 import os
 import shutil
@@ -7,9 +8,11 @@ import re
 from docx import Document
 
 xlsx_B25B26_columns = ["审批表编号", "提出单位一", "变更原因二",
-                       "变更内容三", "变更通知单编号", "变更编号和说明", "日期五", "六版本", "是否完成面单"]
+                       "变更内容三", "变更通知单编号", "变更编号和说明", "日期五", "六版本", "是否完成面单", "何种专业四"]
 xlsx_B23_columns = ["审批表编号", "提出单位一", "变更原因二", "变更内容三",
-                    "变更通知单编号", "变更编号和说明", "日期五",  "是否完成面单", "是否正式盖章蓝图"]
+                    "变更通知单编号", "变更编号和说明", "日期五",  "是否完成面单", "是否正式盖章蓝图", "何种专业四"]
+xlsx_MMC_columns = ["审批表编号", "提出单位一", "变更原因二",
+                    "变更内容三", "变更通知单编号", "变更编号和说明", "日期五", "六版本", "是否完成面单", "何种专业四"]
 
 
 class base_data_from_xls:
@@ -20,12 +23,15 @@ class base_data_from_xls:
     def __init__(self, file_name: str, project_id: str = None):
         self.base_data_no_proc = pd.read_excel(file_name)
         self.base_data = pd.DataFrame()
+
         if project_id == "B25B26":
             self.base_data_no_proc.columns = xlsx_B25B26_columns
+        elif project_id == "MMC":
+            self.base_data_no_proc.columns = xlsx_MMC_columns
         elif project_id == "B23":
             self.base_data_no_proc.columns = xlsx_B23_columns
         self.base_data_no_proc = self.base_data_no_proc[self.base_data_no_proc.loc[:, "是否完成面单"] == "否"]
-        print(self.base_data_no_proc)
+#        print(self.base_data_no_proc)
         if len(self.base_data_no_proc) == 0:
             print("空列表，单子都出过了")
             exit()
@@ -54,6 +60,7 @@ class base_data_from_xls:
             return "厨房给排水"
         if "NT-" in x["变更通知单编号"]:
             return "厨房暖通"
+        return "None"
 
     def get_data_proceed(self) -> pd.DataFrame:
         """直接处理输入excel：
@@ -66,7 +73,7 @@ class base_data_from_xls:
         # * 检查是否出现重复数据
         flag1 = self.base_data_no_proc["变更通知单编号"].duplicated()
         flag2 = self.base_data_no_proc["审批表编号"].duplicated()
-        if (flag1.any() == True or flag2.any() == True):
+        if (flag1.any() is True or flag2.any() is True):
             repeat_df1 = self.base_data_no_proc["变更通知单编号"].count() > 1
             repeat_df2 = self.base_data_no_proc["审批表编号"].count() > 1
             print(repeat_df1)
@@ -167,7 +174,7 @@ def copy_file_to_target(src_dir: str, file_key_name: str, des_dir: str) -> True 
         print("新建 %s " % des_dir)
     # 遍历生成src_folders绝对路径lists
     files_under_src = []
-    for dirpath, dirnames, filenames in os.walk(src_dir):
+    for dirpath, _, filenames in os.walk(src_dir):
         for filename in filenames:
             files_under_src.append(os.path.join(dirpath, filename))
             print(os.path.join(dirpath, filename))
@@ -305,7 +312,7 @@ def main():
     copy_to_dir = "C:\\Users\\CNCC2-01\\Desktop\\新建文件夹"
     sheet_dir = "D:\\CloudStation\\Python\\Project\\CNCC2_DesignChange_Doc\\test"
 
-    # TODO 建立df_data里面编号和变更的dict，先遍历编号然后遍历变更的两个路径，对应的往对应目录里拷
+    # TODO: 建立df_data里面编号和变更的dict，先遍历编号然后遍历变更的两个路径，对应的往对应目录里拷
     df_to_dict = df_data.set_index("变更通知单编号").to_dict()['审批表编号']
     for key, value in df_to_dict.items():
         for dir in design_change_dirs:
@@ -368,6 +375,9 @@ def set_lines_in_doc(df_data: pd.DataFrame, basic_doc_file: str, doc_dir: str, p
     elif project_id == "B23":
         # B23
         cols_text = xlsx_B23_columns
+    elif project_id == "MMC":
+        # B23
+        cols_text = xlsx_MMC_columns
 
     for i in range(0, len(df_data)):
         doc = replace_doc_lines(basic_doc_file, doc_dir,
@@ -379,7 +389,7 @@ def set_lines_in_doc(df_data: pd.DataFrame, basic_doc_file: str, doc_dir: str, p
         doc.save_proceed_docx()
 
 
-def CNCC2_DesignChanges(xlsx_with_dir: str, docx_tempalate: str, project_id: str = None, output_dir: str = "./test"):
+def CNCC2_DesignChanges(xlsx_with_dir: str, docx_tempalate: str, project_id: str = "", output_dir: str = "./test"):
     df = get_design_change_from_xlsx(xlsx_with_dir, project_id)
 
     # 带索引的base_docx文件 & docx文件输出文件夹
@@ -408,12 +418,15 @@ def get_file_for_DesignChanges(file_key_word: str, file_type: str):
 
 
 if __name__ == "__main__":
-
-    B25B26_xlsx_with_dir = get_file_for_DesignChanges("B25B26", "xlsx")
+    # B25B26_xlsx_with_dir = get_file_for_DesignChanges("B25B26", "xlsx")
     B23_xlsx_with_dir = get_file_for_DesignChanges("B23", "xlsx")
+    # MMC_xlsx_with_dir = get_file_for_DesignChanges("MMC", "xlsx")
 
-    B25B26_basic_doc_file = get_file_for_DesignChanges("B25B26", "docx")
+    # B25B26_basic_doc_file = get_file_for_DesignChanges("B25B26", "docx")
     B23_basic_doc_file = get_file_for_DesignChanges("B23", "docx")
-    CNCC2_DesignChanges(B25B26_xlsx_with_dir,
-                        B25B26_basic_doc_file, "B25B26", "./B25B26/")
-    # CNCC2_DesignChanges(B23_xlsx_with_dir, B23_basic_doc_file, "B23", "./B23/")
+    # MMC_basic_doc_file = get_file_for_DesignChanges("MMC", "docx")
+    # CNCC2_DesignChanges(B25B26_xlsx_with_dir,
+    #                    B25B26_basic_doc_file, "B25B26", "./B25B26/")
+    CNCC2_DesignChanges(B23_xlsx_with_dir, B23_basic_doc_file, "B23", "./B23/")
+    # CNCC2_DesignChanges(MMC_xlsx_with_dir,
+    #                     MMC_basic_doc_file, "MMC", "./MMC/"
